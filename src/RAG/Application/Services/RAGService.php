@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\RAG\Application\Services;
 
 use Src\RAG\Domain\Repositories\RAGRepositoryInterface;

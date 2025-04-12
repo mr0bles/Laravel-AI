@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\RAG\Domain\Repositories;
 
 use Src\RAG\Domain\ValueObjects\Document;

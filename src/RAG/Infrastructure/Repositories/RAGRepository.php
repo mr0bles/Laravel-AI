@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\RAG\Infrastructure\Repositories;
 
 use Src\RAG\Domain\Repositories\RAGRepositoryInterface;
 use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
+use Carbon\Carbon;
 
 class RAGRepository implements RAGRepositoryInterface
 {
@@ -29,7 +32,7 @@ class RAGRepository implements RAGRepositoryInterface
                 'results' => [
                     'response' => $response['response'] ?? '',
                     'model' => Config::get('services.llm.default_model', 'deepseek-coder-v2:lite'),
-                    'timestamp' => now()->toIso8601String()
+                    'timestamp' => Carbon::now()->toIso8601String()
                 ]
             ];
         } catch (\Exception $e) {
@@ -49,7 +52,7 @@ class RAGRepository implements RAGRepositoryInterface
             return [
                 'id' => uniqid('doc_'),
                 'status' => 'stored',
-                'timestamp' => now()->toIso8601String()
+                'timestamp' => Carbon::now()->toIso8601String()
             ];
         } catch (\Exception $e) {
             Log::error('Error al almacenar documento: ' . $e->getMessage());
