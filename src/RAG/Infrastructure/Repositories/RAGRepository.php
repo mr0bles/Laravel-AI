@@ -27,7 +27,6 @@ class RAGRepository implements RAGRepositoryInterface
 
             // Obtener documentos similares
             $similarDocuments = $this->findSimilarDocuments($queryEmbedding, $options);
-            Log::info('Búsqueda RAG documentos', ['similarDocuments' => $similarDocuments]);
 
             // Generar respuesta usando el contexto
             $context = $this->buildContext($similarDocuments);

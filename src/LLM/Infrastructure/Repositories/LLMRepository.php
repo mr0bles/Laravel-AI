@@ -33,9 +33,10 @@ class LLMRepository implements LLMRepositoryInterface
             $response = Http::post("{$this->baseUrl}/api/generate", [
                 'model' => $options['model'] ?? $this->defaultModel,
                 'prompt' => $prompt,
+                'stream' => false,
                 'options' => [
-                    'temperature' => $options['temperature'] ?? null,
-                    'top_p' => $options['top_p'] ?? null
+                    'temperature' => $options['temperature'] ?? 0.7,
+                    'top_p' => $options['top_p'] ?? 0.9
                 ]
             ]);
 
@@ -44,10 +45,19 @@ class LLMRepository implements LLMRepositoryInterface
             }
 
             $data = $response->json();
+            
+            if (!is_array($data)) {
+                throw new RuntimeException('La respuesta del modelo no es un array válido');
+            }
+
+            if (!isset($data['response'])) {
+                throw new RuntimeException('La respuesta del modelo no contiene el campo "response"');
+            }
+
             return [
                 'response' => $data['response'],
-                'model' => $data['model'],
-                'created_at' => $data['created_at']
+                'model' => $data['model'] ?? $this->defaultModel,
+                'created_at' => $data['created_at'] ?? now()->toIso8601String()
             ];
         } catch (\Exception $e) {
             Log::error('Error en repositorio LLM durante generación', [
