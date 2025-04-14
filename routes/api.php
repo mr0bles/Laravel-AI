@@ -20,8 +20,11 @@ Route::prefix('v1')->group(function () {
     // LLM Routes
     Route::prefix('llm')->group(function () {
         Route::post('/generate', [LLMController::class, 'generate']);
+        Route::post('/embedding', [LLMController::class, 'getEmbedding']);
         Route::get('/models', [LLMController::class, 'getModels']);
         Route::get('/models/{modelName}', [LLMController::class, 'getModel']);
+        Route::post('/analyze-image', [LLMController::class, 'analyzeImage']);
+        Route::post('/chat', [LLMController::class, 'chat']);
     });
 
     // RAG Routes

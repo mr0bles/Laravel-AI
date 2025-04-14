@@ -26,13 +26,14 @@ class OllamaLLMRepository implements LLMRepositoryInterface
             $temperature = $options['temperature'] ?? Config::get('ollama-laravel.temperature');
             $topP = $options['top_p'] ?? Config::get('ollama-laravel.top_p');
 
-            $response = $this->ollama->agent($this->getSystemPrompt())
+            $response = $this->ollama->agent('You are a helpful AI assistant.')
                 ->prompt($prompt)
                 ->model($model)
                 ->options([
                     'temperature' => $temperature,
                     'top_p' => $topP
                 ])
+                ->stream(false)
                 ->ask();
 
             if (!isset($response['response'])) {
@@ -91,17 +92,85 @@ class OllamaLLMRepository implements LLMRepositoryInterface
     public function getModel(string $modelName): array
     {
         try {
-            $response = $this->ollama->model($modelName)->show();
-            if (!isset($response['license'])) {
+            $response = $this->ollama->model($modelName);
+            if (!isset($response['name'])) {
                 throw new RuntimeException('Respuesta inválida de Ollama: no contiene información del modelo');
             }
             return [
-                'name' => $response['license'],
+                'name' => $response['name'],
                 'modified_at' => $response['modified_at'] ?? now()->toIso8601String(),
                 'size' => $response['size'] ?? 0
             ];
         } catch (\Exception $e) {
             throw new RuntimeException('Error al obtener información del modelo: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    public function analyzeImage(string $imagePath, string $prompt, array $options = []): array
+    {
+        try {
+            $model = $options['model'] ?? Config::get('ollama-laravel.model');
+            $temperature = $options['temperature'] ?? Config::get('ollama-laravel.temperature');
+            $topP = $options['top_p'] ?? Config::get('ollama-laravel.top_p');
+
+            $response = $this->ollama->model($model)
+                ->prompt($prompt)
+                ->image($imagePath)
+                ->options([
+                    'temperature' => $temperature,
+                    'top_p' => $topP
+                ])
+                ->ask();
+
+            if (!isset($response['response'])) {
+                throw new RuntimeException('Respuesta inválida de Ollama: no contiene el campo response');
+            }
+
+            return [
+                'response' => $response['response'],
+                'metadata' => [
+                    'model' => $model,
+                    'created_at' => now()->toIso8601String(),
+                    'temperature' => $temperature,
+                    'top_p' => $topP
+                ]
+            ];
+        } catch (\Exception $e) {
+            throw new RuntimeException('Error al analizar imagen: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    public function chat(array $messages, array $options = []): array
+    {
+        try {
+            $model = $options['model'] ?? Config::get('ollama-laravel.model');
+            $temperature = $options['temperature'] ?? Config::get('ollama-laravel.temperature');
+            $topP = $options['top_p'] ?? Config::get('ollama-laravel.top_p');
+
+            $response = $this->ollama->agent('You are a helpful AI assistant.')
+                ->model($model)
+                ->options([
+                    'temperature' => $temperature,
+                    'top_p' => $topP
+                ])
+                ->stream(false)
+                ->chat($messages);
+
+            if (!isset($response['message']['content'])) {
+                throw new RuntimeException('Respuesta inválida de Ollama: no contiene el campo message.content');
+            }
+
+            return [
+                'response' => $response['message']['content'],
+                'metadata' => [
+                    'model' => $model,
+                    'created_at' => now()->toIso8601String(),
+                    'temperature' => $temperature,
+                    'top_p' => $topP
+                ]
+            ];
+        } catch (\Exception $e) {
+            throw new RuntimeException('Error en el chat: ' . $e->getMessage(), 0, $e);
         }
     }
 

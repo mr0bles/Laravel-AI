@@ -1,42 +1,59 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\LLM\Domain\Repositories;
 
 interface LLMRepositoryInterface
 {
     /**
-     * Genera texto usando el modelo LLM
-     *
-     * @param string $prompt El prompt para generar el texto
-     * @param array $options Opciones adicionales para la generación
-     * @return array La respuesta del modelo
-     * @throws \RuntimeException
+     * Genera una respuesta basada en un prompt
+     * 
+     * @param string $prompt El texto de entrada para generar la respuesta
+     * @param array{model?: string, temperature?: float, top_p?: float} $options Opciones adicionales para la generación
+     * @return array{response: string, metadata: array{model: string, created_at: string, temperature: float, top_p: float}}
      */
     public function generate(string $prompt, array $options = []): array;
 
     /**
      * Obtiene el embedding de un texto
-     *
-     * @param string $text El texto para obtener el embedding
-     * @return array El vector de embedding
-     * @throws \RuntimeException
+     * 
+     * @param string $text El texto para obtener su embedding
+     * @return array{embedding: array<float>, metadata: array{model: string, created_at: string}}
      */
     public function getEmbedding(string $text): array;
 
     /**
      * Obtiene la lista de modelos disponibles
-     *
-     * @return array Lista de modelos
-     * @throws \RuntimeException
+     * 
+     * @return array<array{name: string, modified_at: string, size: int}>
      */
     public function getModels(): array;
 
     /**
      * Obtiene información de un modelo específico
-     *
-     * @param string $modelName Nombre del modelo
-     * @return array Información del modelo
-     * @throws \RuntimeException
+     * 
+     * @param string $modelName El nombre del modelo a consultar
+     * @return array{name: string, modified_at: string, size: int}
      */
     public function getModel(string $modelName): array;
+
+    /**
+     * Analiza una imagen y genera una descripción
+     * 
+     * @param string $imagePath Ruta de la imagen a analizar
+     * @param string $prompt Prompt para el análisis de la imagen
+     * @param array{model?: string, temperature?: float, top_p?: float} $options Opciones adicionales
+     * @return array{response: string, metadata: array{model: string, created_at: string, temperature: float, top_p: float}}
+     */
+    public function analyzeImage(string $imagePath, string $prompt, array $options = []): array;
+
+    /**
+     * Inicia una conversación con el modelo
+     * 
+     * @param array<array{role: string, content: string}> $messages Historial de mensajes
+     * @param array{model?: string, temperature?: float, top_p?: float} $options Opciones adicionales
+     * @return array{response: string, metadata: array{model: string, created_at: string, temperature: float, top_p: float}}
+     */
+    public function chat(array $messages, array $options = []): array;
 } 

@@ -26,6 +26,20 @@ class LLMService
         }
     }
 
+    public function getEmbedding(string $text): LLMResponseDTO
+    {
+        try {
+            $response = $this->repository->getEmbedding($text);
+            return LLMResponseDTO::fromArray($response);
+        } catch (\Exception $e) {
+            Log::error('Error en servicio LLM durante obtención de embedding', [
+                'error' => $e->getMessage(),
+                'text' => $text
+            ]);
+            throw $e;
+        }
+    }
+
     public function getModels(): array
     {
         try {
@@ -46,6 +60,35 @@ class LLMService
             Log::error('Error en servicio LLM durante obtención de modelo', [
                 'error' => $e->getMessage(),
                 'model' => $modelName
+            ]);
+            throw $e;
+        }
+    }
+
+    public function analyzeImage(string $imagePath, string $prompt, array $options = []): LLMResponseDTO
+    {
+        try {
+            $response = $this->repository->analyzeImage($imagePath, $prompt, $options);
+            return LLMResponseDTO::fromArray($response);
+        } catch (\Exception $e) {
+            Log::error('Error en servicio LLM durante análisis de imagen', [
+                'error' => $e->getMessage(),
+                'image_path' => $imagePath,
+                'prompt' => $prompt
+            ]);
+            throw $e;
+        }
+    }
+
+    public function chat(array $messages, array $options = []): LLMResponseDTO
+    {
+        try {
+            $response = $this->repository->chat($messages, $options);
+            return LLMResponseDTO::fromArray($response);
+        } catch (\Exception $e) {
+            Log::error('Error en servicio LLM durante chat', [
+                'error' => $e->getMessage(),
+                'messages_count' => count($messages)
             ]);
             throw $e;
         }

@@ -2,6 +2,7 @@
 @defaultModel = deepseek-coder-v2:lite
 @temperature = 0.7
 @top_p = 0.9
+@imagePath = ./test.png
 
 ### LLM Endpoints
 
@@ -23,3 +24,38 @@ GET {{baseUrl}}/llm/models
 
 ### Obtener información de un modelo específico
 GET {{baseUrl}}/llm/models/{{defaultModel}}
+
+### Obtener embedding
+POST {{baseUrl}}/llm/embedding
+Content-Type: application/json
+Accept: application/json
+
+{
+    "text": "Este es un texto de ejemplo para obtener su embedding"
+}
+
+### Chat
+POST {{baseUrl}}/llm/chat
+Content-Type: application/json
+Accept: application/json
+
+{
+    "messages": [
+        {
+            "role": "system",
+            "content": "Eres un asistente útil y amigable."
+        },
+        {
+            "role": "user",
+            "content": "Soy Robles de Badajoz?"
+        },
+        {
+            "role": "assistant",
+            "content": "encantado, ¿cómo estás?"
+        },
+        {
+            "role": "user",
+            "content": "Bien, ¿sabes de donde soy?"
+        }
+    ]
+}

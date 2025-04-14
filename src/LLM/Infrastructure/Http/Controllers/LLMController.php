@@ -5,6 +5,7 @@ namespace Src\LLM\Infrastructure\Http\Controllers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Src\LLM\Application\Services\LLMService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,6 +49,25 @@ class LLMController extends Controller
         }
     }
 
+    public function getEmbedding(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'text' => 'required|string'
+            ]);
+
+            $response = $this->service->getEmbedding($validated['text']);
+
+            return response()->json($response);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function getModels(): JsonResponse
     {
         try {
@@ -63,6 +83,64 @@ class LLMController extends Controller
     {
         try {
             return response()->json($this->service->getModel($modelName));
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function analyzeImage(Request $request): JsonResponse
+    {
+        try {
+            Log::info('Request completa', $request->all());
+
+            $validated = $request->validate([
+                'image' => 'required|image',
+                'prompt' => 'required|string',
+                'options' => 'array'
+            ]);
+
+            $options = $validated['options'] ?? [];
+            $imagePath = $validated['image']->store('temp', 'public');
+
+            $response = $this->service->analyzeImage(
+                storage_path('app/public/' . $imagePath),
+                $validated['prompt'],
+                $options
+            );
+
+            // Limpiar el archivo temporal
+            unlink(storage_path('app/public/' . $imagePath));
+
+            return response()->json($response->toArray());
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function chat(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'messages' => 'required|array',
+                'messages.*.role' => 'required|string|in:system,user,assistant',
+                'messages.*.content' => 'required|string',
+                'options' => 'array'
+            ]);
+
+            $response = $this->service->chat(
+                $validated['messages'],
+                $validated['options'] ?? []
+            );
+
+            return response()->json($response->toArray());
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
