@@ -49,8 +49,4 @@ return [
         'embedding_dimensions' => env('OLLAMA_EMBEDDING_DIMENSIONS', 768),
     ],
 
-    'llm' => [
-        'default_model' => env('LLM_DEFAULT_MODEL', 'deepseek-coder-v2:lite'),
-    ],
-
 ];
