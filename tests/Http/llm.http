@@ -1,5 +1,7 @@
 ### Variables
 @defaultModel = deepseek-coder-v2:lite
+@temperature = 0.7
+@top_p = 0.9
 
 ### LLM Endpoints
 
@@ -8,11 +10,11 @@ POST {{baseUrl}}/llm/generate
 Content-Type: application/json
 
 {
-    "prompt": "¿Cuál es la capital de Francia?",
+    "prompt": "¿Cuál es el mejor equipo de futbol de españa?",
     "model": "{{defaultModel}}",
     "options": {
-        "temperature": 0.7,
-        "top_p": 0.9
+        "temperature": {{temperature}},
+        "top_p": {{top_p}}
     }
 }
 

@@ -59,13 +59,13 @@ class RAGRepository implements RAGRepositoryInterface
     {
         try {
             // 1. Obtener el embedding del contenido
-            $embedding = $this->getEmbedding($document['content']);
+            $embeddingResponse = $this->llmRepository->getEmbedding($document['content']);
 
             // 2. Crear el documento en la base de datos
             $ragDocument = RAGDocument::create([
                 'content' => $document['content'],
                 'metadata' => $document['metadata'] ?? [],
-                'embedding' => $embedding
+                'embedding' => $embeddingResponse['embedding']
             ]);
 
             return [
@@ -93,7 +93,8 @@ class RAGRepository implements RAGRepositoryInterface
     private function getEmbedding(string $text): array
     {
         try {
-            return $this->llmRepository->getEmbedding($text);
+            $response = $this->llmRepository->getEmbedding($text);
+            return $response['embedding'];
         } catch (\Exception $e) {
             Log::error('Error al obtener embedding: ' . $e->getMessage());
             throw $e;

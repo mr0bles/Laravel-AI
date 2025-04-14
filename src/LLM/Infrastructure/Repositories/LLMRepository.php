@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
 use RuntimeException;
 
+/** @deprecated  */
 class LLMRepository implements LLMRepositoryInterface
 {
     private string $baseUrl;
@@ -45,7 +46,7 @@ class LLMRepository implements LLMRepositoryInterface
             }
 
             $data = $response->json();
-            
+
             if (!is_array($data)) {
                 throw new RuntimeException('La respuesta del modelo no es un array válido');
             }

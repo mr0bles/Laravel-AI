@@ -42,11 +42,4 @@ return [
         ],
     ],
 
-    'ollama' => [
-        'url' => env('OLLAMA_URL', 'http://localhost:11434'),
-        'default_model' => env('OLLAMA_DEFAULT_MODEL', 'deepseek-coder-v2:lite'),
-        'embedding_model' => env('OLLAMA_EMBEDDING_MODEL', 'nomic-embed-text:latest'),
-        'embedding_dimensions' => env('OLLAMA_EMBEDDING_DIMENSIONS', 768),
-    ],
-
 ];

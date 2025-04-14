@@ -130,6 +130,7 @@ return [
         /*
          * Package Service Providers...
          */
+        \Cloudstudio\Ollama\OllamaServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -142,6 +143,6 @@ return [
     ])->toArray(),
 
     'aliases' => Facade::defaultAliases()->merge([
-        // 'Example' => App\Facades\Example::class,
+        'Ollama' => \Cloudstudio\Ollama\Facades\Ollama::class
     ])->toArray(),
 ];
