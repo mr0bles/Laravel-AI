@@ -18,14 +18,13 @@ class RAGService
      * Busca documentos similares a la consulta dada
      *
      * @param string $query
-     * @param array $options
      * @return array
      */
-    public function search(string $query, array $options = []): array
+    public function search(string $query): array
     {
         try {
-            Log::info('Iniciando búsqueda RAG', ['query' => $query, 'options' => $options]);
-            $results = $this->ragRepository->search($query, $options);
+            Log::info('Iniciando búsqueda RAG', ['query' => $query]);
+            $results = $this->ragRepository->search($query);
             Log::info('Búsqueda RAG completada', ['results' => $results]);
             return $results;
         } catch (\Exception $e) {
