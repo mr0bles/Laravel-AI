@@ -6,6 +6,7 @@ use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Config;
+use RuntimeException;
 
 class LLMRepository implements LLMRepositoryInterface
 {
@@ -22,53 +23,46 @@ class LLMRepository implements LLMRepositoryInterface
 
     /**
      * @param string $prompt
-     * @param array $options
-     * @return array
-     * @throws \RuntimeException
+     * @param array{model?: string, temperature?: float, top_p?: float} $options
+     * @return array{response: string, model: string, created_at: string}
+     * @throws RuntimeException
      */
     public function generate(string $prompt, array $options = []): array
     {
         try {
-            // Asegurarnos de que no se use el modelo de embeddings para generación
-            $model = $options['model'] ?? $this->defaultModel;
-            if ($model === $this->embeddingModel) {
-                $model = $this->defaultModel;
-            }
-            
             $response = Http::post("{$this->baseUrl}/api/generate", [
-                'model' => $model,
+                'model' => $options['model'] ?? $this->defaultModel,
                 'prompt' => $prompt,
-                'options' => $options,
-                'stream' => false
+                'options' => [
+                    'temperature' => $options['temperature'] ?? null,
+                    'top_p' => $options['top_p'] ?? null
+                ]
             ]);
 
             if (!$response->successful()) {
-                Log::error('LLM API error', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                throw new \RuntimeException('Error al comunicarse con el servicio LLM');
+                throw new RuntimeException('Error al generar texto: ' . $response->body());
             }
 
-            $result = $response->json();
-            $result['model'] = $model; // Añadir el modelo usado a la respuesta
-            
-            return $result;
-
+            $data = $response->json();
+            return [
+                'response' => $data['response'],
+                'model' => $data['model'],
+                'created_at' => $data['created_at']
+            ];
         } catch (\Exception $e) {
-            Log::error('Error en el servicio LLM', [
+            Log::error('Error en repositorio LLM durante generación', [
                 'error' => $e->getMessage(),
                 'prompt' => $prompt,
-                'model' => $model ?? $this->defaultModel
+                'options' => $options
             ]);
-            throw $e;
+            throw new RuntimeException('Error al generar texto: ' . $e->getMessage(), 0, $e);
         }
     }
 
     /**
      * @param string $text
-     * @return array
-     * @throws \RuntimeException
+     * @return array<float>
+     * @throws RuntimeException
      */
     public function getEmbedding(string $text): array
     {
@@ -79,28 +73,23 @@ class LLMRepository implements LLMRepositoryInterface
             ]);
 
             if (!$response->successful()) {
-                Log::error('LLM API error', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                throw new \RuntimeException('Error al obtener el embedding');
+                throw new RuntimeException('Error al obtener embedding: ' . $response->body());
             }
 
-            return $response->json('embedding', []);
-
+            $data = $response->json();
+            return $data['embedding'];
         } catch (\Exception $e) {
-            Log::error('Error al obtener embedding', [
+            Log::error('Error en repositorio LLM durante obtención de embedding', [
                 'error' => $e->getMessage(),
-                'text' => $text,
-                'model' => $this->embeddingModel
+                'text' => $text
             ]);
-            throw $e;
+            throw new RuntimeException('Error al obtener embedding: ' . $e->getMessage(), 0, $e);
         }
     }
 
     /**
-     * @return array
-     * @throws \RuntimeException
+     * @return array<array{name: string, size: string}>
+     * @throws RuntimeException
      */
     public function getModels(): array
     {
@@ -108,52 +97,41 @@ class LLMRepository implements LLMRepositoryInterface
             $response = Http::get("{$this->baseUrl}/api/tags");
 
             if (!$response->successful()) {
-                Log::error('LLM API error', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-                throw new \RuntimeException('Error al obtener los modelos disponibles');
+                throw new RuntimeException('Error al obtener modelos: ' . $response->body());
             }
 
-            return $response->json('models', []);
-
+            $data = $response->json();
+            return $data['models'];
         } catch (\Exception $e) {
-            Log::error('Error al obtener modelos del servicio LLM', [
+            Log::error('Error en repositorio LLM durante obtención de modelos', [
                 'error' => $e->getMessage()
             ]);
-            throw $e;
+            throw new RuntimeException('Error al obtener modelos: ' . $e->getMessage(), 0, $e);
         }
     }
 
     /**
      * @param string $modelName
-     * @return array
-     * @throws \RuntimeException
+     * @return array{name: string, size: string, parameters: array{temperature: float, top_p: float}}
+     * @throws RuntimeException
      */
     public function getModel(string $modelName): array
     {
         try {
-            $response = Http::get("{$this->baseUrl}/api/show", [
-                'name' => $modelName
-            ]);
+            $url = "{$this->baseUrl}/api/show?name={$modelName}";
+            $response = Http::get($url);
 
             if (!$response->successful()) {
-                Log::error('LLM API error', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'model' => $modelName
-                ]);
-                throw new \RuntimeException('Error al obtener información del modelo');
+                throw new RuntimeException('Error al obtener información del modelo: ' . $response->body());
             }
 
             return $response->json();
-
         } catch (\Exception $e) {
-            Log::error('Error al obtener información del modelo', [
+            Log::error('Error en repositorio LLM durante obtención de modelo', [
                 'error' => $e->getMessage(),
                 'model' => $modelName
             ]);
-            throw $e;
+            throw new RuntimeException('Error al obtener información del modelo: ' . $e->getMessage(), 0, $e);
         }
     }
-} 
+}

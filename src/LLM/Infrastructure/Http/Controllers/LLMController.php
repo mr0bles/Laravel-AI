@@ -8,6 +8,8 @@ use Illuminate\Routing\Controller;
 use Src\LLM\Application\Services\LLMService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class LLMController extends Controller
 {
@@ -19,30 +21,52 @@ class LLMController extends Controller
 
     public function generate(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'prompt' => 'required|string',
-            'model' => 'required|string',
-            'options' => 'array'
-        ]);
+        try {
+            $validated = $request->validate([
+                'prompt' => 'required|string',
+                'model' => 'string',
+                'options' => 'array'
+            ]);
 
-        $options = $validated['options'] ?? [];
-        $options['model'] = $validated['model'];
+            $options = $validated['options'] ?? [];
+            if (isset($validated['model'])) {
+                $options['model'] = $validated['model'];
+            }
 
-        $response = $this->service->generate(
-            $validated['prompt'],
-            $options
-        );
+            $response = $this->service->generate(
+                $validated['prompt'],
+                $options
+            );
 
-        return response()->json($response->toArray());
+            return response()->json($response->toArray());
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function getModels(): JsonResponse
     {
-        return response()->json($this->service->getModels());
+        try {
+            return response()->json($this->service->getModels());
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function getModel(string $modelName): JsonResponse
     {
-        return response()->json($this->service->getModel($modelName));
+        try {
+            return response()->json($this->service->getModel($modelName));
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }
