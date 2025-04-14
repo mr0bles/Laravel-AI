@@ -1,66 +1,183 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MR-AI
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este proyecto implementa un sistema de RAG (Retrieval Augmented Generation) utilizando Laravel, PostgreSQL con pgvector y Ollama.
 
-## About Laravel
+## Requisitos
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Docker y Docker Compose
+- Git
+- Ollama instalado y ejecutándose en el host
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Configuración
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Clonar el repositorio:
+   ```bash
+   git clone https://github.com/mr0bles/mr-ai.git
+   cd mr-ai
+   ```
 
-## Learning Laravel
+2. Copiar el archivo de entorno de ejemplo:
+   ```bash
+   cp .env.example .env
+   ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+3. Configurar las variables de entorno en `.env`:
+   ```env
+   # Configuración de la aplicación
+   APP_NAME="Ollama API"
+   APP_ENV=local
+   APP_DEBUG=true
+   APP_URL=http://localhost
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+   # Configuración de la base de datos
+   DB_CONNECTION=pgsql
+   DB_HOST=db
+   DB_PORT=5432
+   DB_DATABASE=mr_ai
+   DB_USERNAME=mr_ai
+   DB_PASSWORD=mr_ai_password
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   # Configuración de Ollama
+   OLLAMA_URL=http://192.168.1.67:11434  # Ajustar según tu configuración
+   OLLAMA_MODEL=deepseek-coder-v2:lite
+   OLLAMA_EMBEDDING_MODEL=nomic-embed-text:latest
+   OLLAMA_EMBEDDING_DIMENSIONS=768
 
-## Laravel Sponsors
+   # Configuración de RAG
+   RAG_SIMILARITY_THRESHOLD=0.7
+   RAG_MAX_RESULTS=5
+   RAG_TEMPERATURE=0.7
+   RAG_TOP_P=0.9
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Levantar el Stack
 
-### Premium Partners
+1. Construir y levantar los contenedores:
+   ```bash
+   docker-compose up -d --build
+   ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+2. Instalar las dependencias de Composer:
+   ```bash
+   docker-compose exec app composer install
+   ```
 
-## Contributing
+3. Generar la clave de la aplicación:
+   ```bash
+   docker-compose exec app php artisan key:generate
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. Ejecutar las migraciones:
+   ```bash
+   docker-compose exec app php artisan migrate:fresh
+   ```
 
-## Code of Conduct
+5. Verificar que los servicios estén funcionando:
+   ```bash
+   docker-compose ps
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Uso
 
-## Security Vulnerabilities
+### LLM API
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+La API de LLM proporciona los siguientes endpoints:
 
-## License
+- Generar texto:
+  ```bash
+  POST /api/v1/llm/generate
+  Content-Type: application/json
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+  {
+      "prompt": "¿Cuál es la capital de Francia?",
+      "model": "deepseek-coder-v2:lite",
+      "options": {
+          "temperature": 0.7,
+          "top_p": 0.9
+      }
+  }
+  ```
+
+- Obtener modelos disponibles:
+  ```bash
+  GET /api/v1/llm/models
+  ```
+
+- Obtener información de un modelo:
+  ```bash
+  GET /api/v1/llm/models/{modelName}
+  ```
+
+### RAG API
+
+La API de RAG proporciona los siguientes endpoints:
+
+- Buscar documentos:
+  ```bash
+  POST /api/v1/rag/search
+  Content-Type: application/json
+
+  {
+      "query": "¿Qué es la inteligencia artificial?"
+  }
+  ```
+
+- Almacenar documento:
+  ```bash
+  POST /api/v1/rag/documents
+  Content-Type: application/json
+
+  {
+      "content": "La inteligencia artificial es...",
+      "metadata": {
+          "source": "Wikipedia",
+          "author": "John Doe"
+      }
+  }
+  ```
+
+- Eliminar documento:
+  ```bash
+  DELETE /api/v1/rag/documents/{id}
+  ```
+
+## Pruebas
+
+Para probar los endpoints, puedes usar el archivo `tests/Http/llm.http` con la extensión REST Client de VS Code o cualquier cliente HTTP como Postman.
+
+## Detener el Stack
+
+Para detener los contenedores:
+```bash
+docker-compose down
+```
+
+Para detener y eliminar los volúmenes:
+```bash
+docker-compose down -v
+```
+
+## Solución de Problemas
+
+1. Si la aplicación no puede conectarse a Ollama:
+   - Verifica que Ollama esté ejecutándose en el host
+   - Ajusta la URL de Ollama en el archivo `.env`
+   - Verifica que el puerto 11434 esté accesible
+
+2. Si hay problemas con la base de datos:
+   - Verifica que PostgreSQL esté ejecutándose
+   - Verifica las credenciales en el archivo `.env`
+   - Intenta reiniciar el contenedor de la base de datos:
+     ```bash
+     docker-compose restart db
+     ```
+
+3. Si hay problemas con la aplicación:
+   - Verifica los logs:
+     ```bash
+     docker-compose logs app
+     ```
+   - Intenta reiniciar el contenedor:
+     ```bash
+     docker-compose restart app
+     ```

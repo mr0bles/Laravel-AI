@@ -5,21 +5,21 @@ POST {{baseUrl}}/rag/search
 Content-Type: application/json
 
 {
-    "query": "¿Qué es el machine learning?"
+    "query": "¿Cómo se llamaba el anciano que arreglaba los relojes de los sueños?"
 }
 
 ### Almacenar documento
-POST {{baseUrl}}/rag/store
+POST {{baseUrl}}/rag/documents
 Content-Type: application/json
 
 {
-    "content": "El machine learning es una rama de la inteligencia artificial...",
+    "content": "El relojero de los sueños\n\nEn un rincón olvidado del mundo, existía una tienda diminuta entre dos callejones que nunca coincidían en el tiempo. Allí vivía Elías, un anciano relojero que no arreglaba relojes normales, sino relojes que marcaban los sueños.\n\nCada noche, cuando la ciudad dormía, clientes silenciosos cruzaban su puerta: un niño que deseaba volar, una anciana que anhelaba revivir un amor de juventud, un gato que quería ser tigre por una noche. Elías abría cada reloj, ajustaba engranajes invisibles y susurraba palabras en lenguas olvidadas. Al amanecer, los clientes despertaban con el recuerdo de sueños que nunca supieron que necesitaban.\n\nUna madrugada, Elías encontró sobre su mesa un reloj que no recordaba haber fabricado. Era sencillo, sin marcas ni manecillas. Cuando lo abrió, en vez de engranajes, halló una nota:\n“Tu turno.”\n\nEsa noche, por primera vez, Elías cerró su tienda y durmió.\n\nY soñó.",
     "metadata": {
-        "title": "Introducción a Machine Learning",
-        "author": "John Doe",
-        "tags": ["AI", "ML", "Tutorial"]
+        "title": "Cuento inventado",
+        "author": "GPT",
+        "tags": ["AI", "Cuento", "Tutorial"]
     }
 }
 
 ### Eliminar documento
-DELETE {{baseUrl}}/rag/delete/doc_123
+DELETE {{baseUrl}}/rag/documents/1

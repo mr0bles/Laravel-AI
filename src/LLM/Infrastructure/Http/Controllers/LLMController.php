@@ -25,10 +25,12 @@ class LLMController extends Controller
             'options' => 'array'
         ]);
 
+        $options = $validated['options'] ?? [];
+        $options['model'] = $validated['model'];
+
         $response = $this->service->generate(
             $validated['prompt'],
-            $validated['model'],
-            $validated['options'] ?? []
+            $options
         );
 
         return response()->json($response->toArray());

@@ -12,9 +12,10 @@ interface RAGRepositoryInterface
      * Busca documentos relacionados con la consulta
      *
      * @param string $query
+     * @param array $options
      * @return array
      */
-    public function search(string $query): array;
+    public function search(string $query, array $options = []): array;
 
     /**
      * Almacena un nuevo documento

@@ -11,9 +11,9 @@ class LLMService
         private readonly LLMRepositoryInterface $repository
     ) {}
 
-    public function generate(string $prompt, string $model, array $options = []): LLMResponseDTO
+    public function generate(string $prompt, array $options = []): LLMResponseDTO
     {
-        $response = $this->repository->generate($prompt, $model, $options);
+        $response = $this->repository->generate($prompt, $options);
         return LLMResponseDTO::fromArray($response);
     }
 
