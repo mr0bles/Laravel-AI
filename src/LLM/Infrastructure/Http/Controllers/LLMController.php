@@ -4,13 +4,13 @@ namespace Src\LLM\Infrastructure\Http\Controllers;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Log;
-use Src\LLM\Application\Services\LLMService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Src\LLM\Application\Services\LLMService;
 
 class LLMController extends Controller
 {
@@ -53,10 +53,10 @@ class LLMController extends Controller
     {
         try {
             $validated = $request->validate([
-                'text' => 'required|string'
+                'prompt' => 'required|string'
             ]);
 
-            $response = $this->service->getEmbedding($validated['text']);
+            $response = $this->service->getEmbedding($validated['prompt']);
 
             return response()->json($response);
         } catch (ValidationException $e) {

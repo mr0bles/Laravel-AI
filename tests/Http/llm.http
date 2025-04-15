@@ -2,7 +2,6 @@
 @defaultModel = deepseek-coder-v2:lite
 @temperature = 0.7
 @top_p = 0.9
-@imagePath = ./test.png
 
 ### LLM Endpoints
 
@@ -31,7 +30,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-    "text": "Este es un texto de ejemplo para obtener su embedding"
+    "prompt": "Este es un texto de ejemplo para obtener su embedding"
 }
 
 ### Chat

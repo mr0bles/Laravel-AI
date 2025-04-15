@@ -2,9 +2,9 @@
 
 namespace Src\RAG\Infrastructure\Http\Controllers;
 
-use Src\RAG\Application\Services\RAGService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Src\RAG\Application\Services\RAGService;
 
 class RAGController
 {
@@ -20,12 +20,12 @@ class RAGController
      */
     public function search(Request $request): JsonResponse
     {
-        $request->validate([
-            'query' => 'required|string|min:1'
+        $validated = $request->validate([
+            'prompt' => 'required|string|min:1'
         ]);
 
         try {
-            $results = $this->ragService->search($request->input('query'));
+            $results = $this->ragService->search($validated['prompt']);
             return response()->json($results);
         } catch (\Exception $e) {
             return response()->json([
@@ -82,4 +82,4 @@ class RAGController
             ], 500);
         }
     }
-} 
+}

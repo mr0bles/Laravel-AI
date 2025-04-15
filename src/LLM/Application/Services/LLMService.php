@@ -2,9 +2,9 @@
 
 namespace Src\LLM\Application\Services;
 
-use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
-use Src\LLM\Domain\DTOs\LLMResponseDTO;
 use Illuminate\Support\Facades\Log;
+use Src\LLM\Application\DTOs\LLMResponseDTO;
+use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
 
 class LLMService
 {
@@ -26,15 +26,15 @@ class LLMService
         }
     }
 
-    public function getEmbedding(string $text): LLMResponseDTO
+    public function getEmbedding(string $prompt): LLMResponseDTO
     {
         try {
-            $response = $this->repository->getEmbedding($text);
+            $response = $this->repository->getEmbedding($prompt);
             return LLMResponseDTO::fromArray($response);
         } catch (\Exception $e) {
             Log::error('Error en servicio LLM durante obtención de embedding', [
                 'error' => $e->getMessage(),
-                'text' => $text
+                'prompt' => $prompt
             ]);
             throw $e;
         }

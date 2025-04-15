@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Src\LLM\Infrastructure\Repositories;
 
 use Cloudstudio\Ollama\Ollama;
-use Illuminate\Support\Facades\Log;
-use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
 use Illuminate\Support\Facades\Config;
 use RuntimeException;
+use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
 
 class OllamaLLMRepository implements LLMRepositoryInterface
 {
@@ -54,26 +53,19 @@ class OllamaLLMRepository implements LLMRepositoryInterface
         }
     }
 
-    public function getEmbedding(string $text): array
+    public function getEmbedding(string $prompt): array
     {
-        try {
-            $model = Config::get('ollama-laravel.embedding_model');
-            $response = $this->ollama->model($model)->embeddings($text);
+        $model = Config::get('llm.embedding_model', 'nomic-embed-text');
 
-            if (!isset($response['embedding'])) {
-                throw new RuntimeException('Respuesta inválida de Ollama: no contiene el campo embedding');
-            }
+        $response = $this->ollama->model($model)->embeddings($prompt);
 
-            return [
-                'embedding' => $response['embedding'],
-                'metadata' => [
-                    'model' => $model,
-                    'created_at' => now()->toIso8601String()
-                ]
-            ];
-        } catch (\Exception $e) {
-            throw new RuntimeException('Error al obtener embedding: ' . $e->getMessage(), 0, $e);
-        }
+        return [
+            'embedding' => $response['embedding'],
+            'metadata' => [
+                'model' => $model,
+                'created_at' => now()->toIso8601String()
+            ]
+        ];
     }
 
     public function getModels(): array

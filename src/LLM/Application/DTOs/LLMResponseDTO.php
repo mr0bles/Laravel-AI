@@ -1,23 +1,13 @@
 <?php
 
-namespace Src\LLM\Domain\DTOs;
+namespace Src\LLM\Application\DTOs;
 
 class LLMResponseDTO
 {
     public function __construct(
-        private readonly string $response,
-        private readonly array $metadata = []
+        public readonly string $response,
+        public readonly array  $metadata = []
     ) {}
-
-    public function getResponse(): string
-    {
-        return $this->response;
-    }
-
-    public function getMetadata(): array
-    {
-        return $this->metadata;
-    }
 
     public static function fromArray(array $data): self
     {
@@ -34,4 +24,4 @@ class LLMResponseDTO
             'metadata' => $this->metadata
         ];
     }
-} 
+}
