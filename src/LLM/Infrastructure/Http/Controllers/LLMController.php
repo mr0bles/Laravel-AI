@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\LLM\Infrastructure\Http\Controllers;
 
+use Exception;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +21,9 @@ class LLMController extends Controller
 
     public function __construct(
         private readonly LLMService $service
-    ) {}
+    )
+    {
+    }
 
     public function generate(Request $request): JsonResponse
     {
@@ -40,9 +45,7 @@ class LLMController extends Controller
             );
 
             return response()->json($response->toArray());
-        } catch (ValidationException $e) {
-            throw $e;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -59,31 +62,30 @@ class LLMController extends Controller
             $response = $this->service->getEmbedding($validated['prompt']);
 
             return response()->json($response);
-        } catch (ValidationException $e) {
-            throw $e;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function getModels(): JsonResponse
+    public function chat(Request $request): JsonResponse
     {
         try {
-            return response()->json($this->service->getModels());
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
+            $validated = $request->validate([
+                'messages' => 'required|array',
+                'messages.*.role' => 'required|string|in:system,user,assistant',
+                'messages.*.content' => 'required|string',
+                'options' => 'array'
+            ]);
 
-    public function getModel(string $modelName): JsonResponse
-    {
-        try {
-            return response()->json($this->service->getModel($modelName));
-        } catch (\Exception $e) {
+            $response = $this->service->chat(
+                $validated['messages'],
+                $validated['options'] ?? []
+            );
+
+            return response()->json($response->toArray());
+        } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -116,32 +118,30 @@ class LLMController extends Controller
             return response()->json($response->toArray());
         } catch (ValidationException $e) {
             throw $e;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function chat(Request $request): JsonResponse
+
+    public function getModels(): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'messages' => 'required|array',
-                'messages.*.role' => 'required|string|in:system,user,assistant',
-                'messages.*.content' => 'required|string',
-                'options' => 'array'
-            ]);
+            return response()->json($this->service->getModels());
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 
-            $response = $this->service->chat(
-                $validated['messages'],
-                $validated['options'] ?? []
-            );
-
-            return response()->json($response->toArray());
-        } catch (ValidationException $e) {
-            throw $e;
-        } catch (\Exception $e) {
+    public function getModel(string $modelName): JsonResponse
+    {
+        try {
+            return response()->json($this->service->getModel($modelName));
+        } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);

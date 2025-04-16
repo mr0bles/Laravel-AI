@@ -1,33 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\RAG\Infrastructure\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Src\RAG\Application\Services\RAGService;
 
-class RAGController
+readonly class RAGController
 {
     public function __construct(
-        private readonly RAGService $ragService
+        private RAGService $ragService
     ) {}
 
-    /**
-     * Busca documentos similares a la consulta dada
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function search(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'prompt' => 'required|string|min:1'
+            'prompt' => 'required|string|min:1',
+            'options' => 'array'
         ]);
 
+        $options = $validated['options'] ?? [];
+
         try {
-            $results = $this->ragService->search($validated['prompt']);
+            $results = $this->ragService->search($validated['prompt'], $options);
             return response()->json($results);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Error al realizar la búsqueda',
                 'message' => $e->getMessage()
@@ -35,12 +35,6 @@ class RAGController
         }
     }
 
-    /**
-     * Almacena un nuevo documento
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -56,7 +50,7 @@ class RAGController
 
             $result = $this->ragService->store($document);
             return response()->json($result, 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Error al almacenar el documento',
                 'message' => $e->getMessage()
@@ -64,18 +58,12 @@ class RAGController
         }
     }
 
-    /**
-     * Elimina un documento por su ID
-     *
-     * @param string $id
-     * @return JsonResponse
-     */
     public function delete(string $id): JsonResponse
     {
         try {
             $this->ragService->delete($id);
             return response()->json(null, 204);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Error al eliminar el documento',
                 'message' => $e->getMessage()

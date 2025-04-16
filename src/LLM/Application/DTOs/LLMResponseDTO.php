@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\LLM\Application\DTOs;
 
-class LLMResponseDTO
+readonly class LLMResponseDTO
 {
     public function __construct(
-        public readonly string $response,
-        public readonly array  $metadata = []
+        public string|array $response,
+        public array        $metadata = []
     ) {}
 
     public static function fromArray(array $data): self

@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Src\LLM\Infrastructure\Http\Controllers\LLMController;
 use Src\RAG\Infrastructure\Http\Controllers\RAGController;
@@ -21,10 +20,11 @@ Route::prefix('v1')->group(function () {
     Route::prefix('llm')->group(function () {
         Route::post('/generate', [LLMController::class, 'generate']);
         Route::post('/embedding', [LLMController::class, 'getEmbedding']);
+        Route::post('/chat', [LLMController::class, 'chat']);
+        Route::post('/analyze-image', [LLMController::class, 'analyzeImage']);
+
         Route::get('/models', [LLMController::class, 'getModels']);
         Route::get('/models/{modelName}', [LLMController::class, 'getModel']);
-        Route::post('/analyze-image', [LLMController::class, 'analyzeImage']);
-        Route::post('/chat', [LLMController::class, 'chat']);
     });
 
     // RAG Routes

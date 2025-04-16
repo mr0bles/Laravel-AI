@@ -19,24 +19,18 @@ interface LLMRepositoryInterface
      * Obtiene el embedding de un texto
      *
      * @param string $prompt El texto para obtener su embedding
-     * @return array{embedding: array<float>, metadata: array{model: string, created_at: string}}
+     * @return array{response: array<float>, metadata: array{model: string, created_at: string}}
      */
     public function getEmbedding(string $prompt): array;
 
     /**
-     * Obtiene la lista de modelos disponibles
+     * Inicia una conversación con el modelo
      *
-     * @return array<array{name: string, modified_at: string, size: int}>
+     * @param array<array{role: string, content: string}> $messages Historial de mensajes
+     * @param array{model?: string, temperature?: float, top_p?: float} $options Opciones adicionales
+     * @return array{response: string, metadata: array{model: string, created_at: string, temperature: float, top_p: float}}
      */
-    public function getModels(): array;
-
-    /**
-     * Obtiene información de un modelo específico
-     *
-     * @param string $modelName El nombre del modelo a consultar
-     * @return array{name: string, modified_at: string, size: int}
-     */
-    public function getModel(string $modelName): array;
+    public function chat(array $messages, array $options = []): array;
 
     /**
      * Analiza una imagen y genera una descripción
@@ -49,11 +43,17 @@ interface LLMRepositoryInterface
     public function analyzeImage(string $imagePath, string $prompt, array $options = []): array;
 
     /**
-     * Inicia una conversación con el modelo
+     * Obtiene la lista de modelos disponibles
      *
-     * @param array<array{role: string, content: string}> $messages Historial de mensajes
-     * @param array{model?: string, temperature?: float, top_p?: float} $options Opciones adicionales
-     * @return array{response: string, metadata: array{model: string, created_at: string, temperature: float, top_p: float}}
+     * @return array<array{name: string, modified_at: string, size: int}>
      */
-    public function chat(array $messages, array $options = []): array;
+    public function getModels(): array;
+
+    /**
+     * Obtiene información de un modelo específico
+     *
+     * @param string $modelName El nombre del modelo a consultar
+     * @return array
+     */
+    public function getModel(string $modelName): array;
 }

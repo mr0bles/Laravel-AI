@@ -4,31 +4,24 @@ declare(strict_types=1);
 
 namespace Src\RAG\Application\Services;
 
+use Exception;
+use Illuminate\Support\Facades\Log;
 use Src\RAG\Domain\Repositories\RAGRepositoryInterface;
 use Src\RAG\Domain\ValueObjects\Document;
-use Illuminate\Support\Facades\Log;
 
-class RAGService
+readonly class RAGService
 {
     public function __construct(
-        private readonly RAGRepositoryInterface $ragRepository
-    ) {}
+        private RAGRepositoryInterface $ragRepository
+    )
+    {
+    }
 
-    /**
-     * Busca documentos similares a la consulta dada
-     *
-     * @param string $query
-     * @param array $options
-     * @return array
-     */
     public function search(string $query, array $options = []): array
     {
         try {
-            Log::info('Iniciando búsqueda RAG', ['query' => $query, 'options' => $options]);
-            $results = $this->ragRepository->search($query, $options);
-            Log::info('Búsqueda RAG completada', ['results' => $results]);
-            return $results;
-        } catch (\Exception $e) {
+            return $this->ragRepository->search($query, $options);
+        } catch (Exception $e) {
             Log::error('Error en servicio RAG durante búsqueda', [
                 'error' => $e->getMessage(),
                 'query' => $query
@@ -37,21 +30,12 @@ class RAGService
         }
     }
 
-    /**
-     * Almacena un nuevo documento
-     *
-     * @param array $documentData
-     * @return array
-     */
     public function store(array $documentData): array
     {
         try {
-            Log::info('Iniciando almacenamiento de documento', ['document' => $documentData]);
             $document = Document::fromArray($documentData);
-            $result = $this->ragRepository->store($document->toArray());
-            Log::info('Documento almacenado exitosamente', ['id' => $result['id'] ?? null]);
-            return $result;
-        } catch (\Exception $e) {
+            return $this->ragRepository->store($document->toArray());
+        } catch (Exception $e) {
             Log::error('Error en servicio RAG durante almacenamiento', [
                 'error' => $e->getMessage(),
                 'document' => $documentData
@@ -60,19 +44,11 @@ class RAGService
         }
     }
 
-    /**
-     * Elimina un documento por su ID
-     *
-     * @param string $id
-     * @return void
-     */
     public function delete(string $id): void
     {
         try {
-            Log::info('Iniciando eliminación de documento', ['id' => $id]);
             $this->ragRepository->delete($id);
-            Log::info('Documento eliminado exitosamente', ['id' => $id]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error en servicio RAG durante eliminación', [
                 'error' => $e->getMessage(),
                 'id' => $id
@@ -80,4 +56,4 @@ class RAGService
             throw $e;
         }
     }
-} 
+}

@@ -4,38 +4,35 @@ declare(strict_types=1);
 
 namespace Src\RAG\Infrastructure\Repositories;
 
-use Src\RAG\Domain\Repositories\RAGRepositoryInterface;
-use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
-use Src\RAG\Infrastructure\Models\RAGDocument;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
+use Src\RAG\Domain\Repositories\RAGRepositoryInterface;
+use Src\RAG\Infrastructure\Models\RAGDocument;
 
-class RAGRepository implements RAGRepositoryInterface
+readonly class RAGRepository implements RAGRepositoryInterface
 {
     public function __construct(
-        private readonly LLMRepositoryInterface $llmRepository
+        private LLMRepositoryInterface $llmRepository
     ) {}
 
     public function search(string $query, array $options = []): array
     {
         try {
-            // Obtener el embedding de la consulta
             $queryEmbedding = $this->getEmbedding($query);
 
-            // Obtener documentos similares
             $similarDocuments = $this->findSimilarDocuments($queryEmbedding, $options);
 
-            // Generar respuesta usando el contexto
             $context = $this->buildContext($similarDocuments);
             $prompt = $this->buildPrompt($query, $context);
 
-            // Usar las opciones de generación del RAG, asegurando que sean float
+
             $generationOptions = [
-                'temperature' => (float)Config::get('rag.temperature', 0.7),
-                'top_p' => (float)Config::get('rag.top_p', 0.9)
+                'model' => $options['model'] ?? Config::get('ollama-laravel.model'),
+                'temperature' => $options['temperature'] ?? Config::get('rag.temperature', 0.7),
+                'top_p' => $options['top_p'] ?? Config::get('rag.top_p', 0.9)
             ];
 
             $response = $this->llmRepository->generate($prompt, $generationOptions);
@@ -43,10 +40,11 @@ class RAGRepository implements RAGRepositoryInterface
             return [
                 'response' => $response['response'] ?? '',
                 'context' => $context,
+                'options' => $generationOptions,
                 'documents' => $similarDocuments->toArray()
             ];
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error en búsqueda RAG', [
                 'error' => $e->getMessage(),
                 'query' => $query
@@ -58,22 +56,20 @@ class RAGRepository implements RAGRepositoryInterface
     public function store(array $document): array
     {
         try {
-            // 1. Obtener el embedding del contenido
             $embeddingResponse = $this->llmRepository->getEmbedding($document['content']);
 
-            // 2. Crear el documento en la base de datos
             $ragDocument = RAGDocument::create([
                 'content' => $document['content'],
                 'metadata' => $document['metadata'] ?? [],
-                'embedding' => $embeddingResponse['embedding']
+                'embedding' => $embeddingResponse['response']
             ]);
 
             return [
                 'id' => $ragDocument->id,
                 'status' => 'stored',
-                'timestamp' => Carbon::now()->toIso8601String()
+                'timestamp' => now()->toIso8601String()
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error al almacenar documento: ' . $e->getMessage());
             throw $e;
         }
@@ -83,8 +79,7 @@ class RAGRepository implements RAGRepositoryInterface
     {
         try {
             RAGDocument::findOrFail($id)->delete();
-            Log::info("Documento eliminado: {$id}");
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error al eliminar documento: ' . $e->getMessage());
             throw $e;
         }
@@ -94,8 +89,8 @@ class RAGRepository implements RAGRepositoryInterface
     {
         try {
             $response = $this->llmRepository->getEmbedding($text);
-            return $response['embedding'];
-        } catch (\Exception $e) {
+            return $response['response'];
+        } catch (Exception $e) {
             Log::error('Error al obtener embedding: ' . $e->getMessage());
             throw $e;
         }

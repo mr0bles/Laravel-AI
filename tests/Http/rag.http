@@ -1,3 +1,10 @@
+### Variables
+@customModel = deepseek-coder
+@temperature = 0.7
+@top_p = 0.9
+@similarity_threshold = 0.7
+@max_results = 5
+
 ### RAG Endpoints
 
 ### Buscar documentos
@@ -8,7 +15,30 @@ Content-Type: application/json
     "prompt": "¿Cómo se llamaba el anciano que arreglaba los relojes de los sueños?"
 }
 
+### Buscar documentos con parametros
+POST {{baseUrl}}/rag/search
+Content-Type: application/json
+
+{
+    "prompt": "¿El proyecto 'Gestion de Inventario' tiene el modulo de 'Gestión de productos (CRUD completo)' instalado? en mi proyecto laravel",
+    "options": {
+        "model": "{{customModel}}",
+        "temperature": {{temperature}},
+        "top_p": {{top_p}},
+        "similarity_threshold": {{similarity_threshold}},
+        "max_results": {{max_results}}
+    }
+}
+
 ### Almacenar documento
+POST {{baseUrl}}/rag/documents
+Content-Type: application/json
+
+{
+    "content": "Documentación del Proyecto: Gestión de Inventario\n\nNombre del Proyecto: Gestión de Inventario\nFramework: Laravel 10\nVersión PHP: 8.2\nBase de Datos: MySQL 8.0\nAutenticación: Laravel Breeze\nFrontend: Blade + Tailwind CSS\nRepositorios:\n- API: git@bitbucket.org:empresa/inventario-api.git\n- Frontend: git@bitbucket.org:empresa/inventario-front.git\n\nMódulos Principales:\n- Gestión de productos (CRUD completo)\n- Control de stock por almacén\n- Historial de movimientos\n- Usuarios y roles\n- Reportes exportables en PDF\n\nIntegraciones:\n- Facturación electrónica (API externa)\n- Notificaciones por correo (Mailgun)\n\nRequisitos del Servidor:\n- PHP >= 8.2\n- Composer\n- Extensiones: pdo, mbstring, openssl, tokenizer, xml, ctype, json"
+}
+
+### Almacenar documento con metadata
 POST {{baseUrl}}/rag/documents
 Content-Type: application/json
 
@@ -22,4 +52,4 @@ Content-Type: application/json
 }
 
 ### Eliminar documento
-DELETE {{baseUrl}}/rag/documents/1
+DELETE {{baseUrl}}/rag/documents/35

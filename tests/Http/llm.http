@@ -1,5 +1,5 @@
 ### Variables
-@defaultModel = deepseek-coder-v2:lite
+@customModel = deepseek-coder
 @temperature = 0.7
 @top_p = 0.9
 
@@ -10,19 +10,21 @@ POST {{baseUrl}}/llm/generate
 Content-Type: application/json
 
 {
-    "prompt": "¿Cuál es el mejor equipo de futbol de españa?",
-    "model": "{{defaultModel}}",
+    "prompt": "¿Cuál es el mejor equipo de futbol de españa?"
+}
+
+### Generar respuesta con LLM con parametros
+POST {{baseUrl}}/llm/generate
+Content-Type: application/json
+
+{
+    "prompt": "¿Cual es la mejor manera de eliminar un valor por valor en un array en PHP 8.4?",
+    "model": "{{customModel}}",
     "options": {
         "temperature": {{temperature}},
         "top_p": {{top_p}}
     }
 }
-
-### Obtener lista de modelos disponibles
-GET {{baseUrl}}/llm/models
-
-### Obtener información de un modelo específico
-GET {{baseUrl}}/llm/models/{{defaultModel}}
 
 ### Obtener embedding
 POST {{baseUrl}}/llm/embedding
@@ -58,3 +60,40 @@ Accept: application/json
         }
     ]
 }
+
+### Chat con parametros
+POST {{baseUrl}}/llm/chat
+Content-Type: application/json
+Accept: application/json
+
+{
+    "messages": [
+        {
+            "role": "system",
+            "content": "Eres programador experto Laravel."
+        },
+        {
+            "role": "user",
+            "content": "Cree el modelo Person"
+        },
+        {
+            "role": "assistant",
+            "content": "¿Fue bien?"
+        },
+        {
+            "role": "user",
+            "content": "Me dio error, ¿que puedo mirar?"
+        }
+    ],
+    "options": {
+        "model": "{{customModel}}",
+        "temperature": {{temperature}},
+        "top_p": {{top_p}}
+    }
+}
+
+### Obtener lista de modelos disponibles
+GET {{baseUrl}}/llm/models
+
+### Obtener información de un modelo específico
+GET {{baseUrl}}/llm/models/{{customModel}}
