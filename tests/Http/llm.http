@@ -1,5 +1,6 @@
 ### Variables
-@customModel = deepseek-coder
+@coderModel = deepseek-coder
+@toolModel = qwen2.5:3b
 @temperature = 0.7
 @top_p = 0.9
 
@@ -19,7 +20,7 @@ Content-Type: application/json
 
 {
     "prompt": "¿Cual es la mejor manera de eliminar un valor por valor en un array en PHP 8.4?",
-    "model": "{{customModel}}",
+    "model": "{{coderModel}}",
     "options": {
         "temperature": {{temperature}},
         "top_p": {{top_p}}
@@ -48,7 +49,7 @@ Accept: application/json
         },
         {
             "role": "user",
-            "content": "Soy Robles de Badajoz?"
+            "content": "Soy Robles, de Badajoz"
         },
         {
             "role": "assistant",
@@ -86,7 +87,7 @@ Accept: application/json
         }
     ],
     "options": {
-        "model": "{{customModel}}",
+        "model": "{{coderModel}}",
         "temperature": {{temperature}},
         "top_p": {{top_p}}
     }
@@ -96,4 +97,21 @@ Accept: application/json
 GET {{baseUrl}}/llm/models
 
 ### Obtener información de un modelo específico
-GET {{baseUrl}}/llm/models/{{customModel}}
+GET {{baseUrl}}/llm/models/{{coderModel}}
+
+### Chat con funciones
+POST {{baseUrl}}/llm/chat
+Content-Type: application/json
+Accept: application/json
+
+{
+    "messages": [
+        {
+            "role": "user",
+            "content": "Dame el clima de un pais aleatorio"
+        }
+    ],
+    "options": {
+        "model": "{{toolModel}}"
+    }
+}

@@ -7,19 +7,25 @@ namespace Src\LLM\Infrastructure\Repositories;
 use Cloudstudio\Ollama\Ollama;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Src\LLM\Domain\Repositories\LLMRepositoryInterface;
+use Src\LLM\Domain\Tools\ToolFunctionRegistry;
 
 class OllamaLLMRepository implements LLMRepositoryInterface
 {
-    private const  SYSTEM_PROMPT = 'Eres un agente de IA especializado, da la respuesta mas corta que puedas.';
-    private Ollama $ollama;
+    private const  SYSTEM_PROMPT = [
+        'Eres un agente de IA especializado, da la respuesta mas corta que puedas.',
+        'Responde en español.'
+    ];
 
-    public function __construct(Ollama $ollama)
+    public function __construct(
+        private readonly Ollama               $ollama,
+        private readonly ToolFunctionRegistry $toolRegistry
+    )
     {
-        $this->ollama = $ollama;
     }
 
     public function generate(string $prompt, array $options = []): array
@@ -39,13 +45,12 @@ class OllamaLLMRepository implements LLMRepositoryInterface
                 ->stream(false)
                 ->ask();
 
+            $this->checkSuccessResponse($response);
+
             if (!isset($response['response'])) {
                 Log::error('Error', [
                     'response' => $response,
                 ]);
-                if (isset($response['error'])) {
-                    throw new RuntimeException('Invalid response from Ollama:' . $response['error']);
-                }
                 throw new RuntimeException('Invalid response from Ollama: does not contain the response field');
             }
 
@@ -71,6 +76,8 @@ class OllamaLLMRepository implements LLMRepositoryInterface
 
             $response = $this->ollama->model($model)->embeddings($prompt);
 
+            $this->checkSuccessResponse($response);
+
             return [
                 'response' => $response['embedding'],
                 'metadata' => [
@@ -90,14 +97,24 @@ class OllamaLLMRepository implements LLMRepositoryInterface
             $temperature = $options['temperature'] ?? Config::get('ollama-laravel.temperature');
             $topP = $options['top_p'] ?? Config::get('ollama-laravel.top_p');
 
-            $response = $this->ollama->agent($this->getSystemPrompt())
+            $ollama = $this->ollama->agent($this->getSystemPrompt())
                 ->model($model)
                 ->options([
                     'temperature' => (float)$temperature,
                     'top_p' => (float)$topP
                 ])
                 ->stream(false)
-                ->chat($messages);
+                ->tools($this->toolRegistry->allDefinitions($model));
+
+            do {
+                $response = $ollama->chat($messages);
+
+                $this->checkSuccessResponse($response);
+
+                if (isset($response['message']['tool_calls'])) {
+                    $this->handleToolCalls($response, $messages);
+                }
+            } while (isset($response['message']['tool_calls']));
 
             if (!isset($response['message']['content'])) {
                 throw new RuntimeException('Invalid response from Ollama: does not contain the message.content field');
@@ -109,7 +126,8 @@ class OllamaLLMRepository implements LLMRepositoryInterface
                     'model' => $model,
                     'created_at' => now()->toIso8601String(),
                     'temperature' => $temperature,
-                    'top_p' => $topP
+                    'top_p' => $topP,
+                    'messages' => $messages,
                 ]
             ];
         } catch (Exception $e) {
@@ -133,6 +151,8 @@ class OllamaLLMRepository implements LLMRepositoryInterface
                 ])
                 ->ask();
 
+            $this->checkSuccessResponse($response);
+
             if (!isset($response['response'])) {
                 throw new RuntimeException('Respuesta inválida de Ollama: no contiene el campo response');
             }
@@ -155,6 +175,9 @@ class OllamaLLMRepository implements LLMRepositoryInterface
     {
         try {
             $response = $this->ollama->models();
+
+            $this->checkSuccessResponse($response);
+
             if (!isset($response['models'])) {
                 throw new RuntimeException('Invalid response from Ollama: does not contain the list of models');
             }
@@ -168,9 +191,9 @@ class OllamaLLMRepository implements LLMRepositoryInterface
     {
         try {
             $response = $this->ollama->model($modelName)->show();
-            if (isset($response['error'])) {
-                throw new RuntimeException('Error getting models information: ' . $response['error']);
-            }
+
+            $this->checkSuccessResponse($response);
+
             return $response;
         } catch (Exception $e) {
             throw new RuntimeException('Error al obtener información del modelo: ' . $e->getMessage(), 0, $e);
@@ -179,6 +202,28 @@ class OllamaLLMRepository implements LLMRepositoryInterface
 
     private function getSystemPrompt(): string
     {
-        return self::SYSTEM_PROMPT;
+        return implode('\n\t', self::SYSTEM_PROMPT);
     }
+
+    private function checkSuccessResponse(Response|array $response): void
+    {
+        if (isset($response['error'])) {
+            throw new RuntimeException('Invalid response from Ollama:' . $response['error']);
+        }
+    }
+
+    private function handleToolCalls(array $response, array &$messages): void
+    {
+        $toolCall = $response['message']['tool_calls'][0]['function'];
+        $tool = $this->toolRegistry->get($toolCall['name']);
+        $result = $tool->execute($toolCall['arguments']);
+
+        $messages[] = $response['message'];
+        $messages[] = [
+            'role' => 'tool',
+            'name' => $toolCall['name'],
+            'content' => json_encode($result),
+        ];
+    }
+
 }

@@ -181,3 +181,19 @@ docker-compose down -v
      ```bash
      docker-compose restart app
      ```
+
+## Extras
+
+- Iniciar ollama en docker local con soporte GPU
+
+ ```bash
+ docker run --rm --gpus all -p 11434:11434 \
+-v ollama:/root/.ollama \
+ollama/ollama
+ ```
+
+- Si necesitas correr uen una red especifica
+
+ ```bash
+docker run --network mi_red_comun -p 11434:11434 ollama/ollama:latest
+ ```
