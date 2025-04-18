@@ -12,7 +12,7 @@ Este proyecto implementa un sistema de RAG (Retrieval Augmented Generation) util
 
 1. Clonar el repositorio:
    ```bash
-   git clone https://github.com/mr0bles/Laravel-AI
+   git clone https://github.com/mr0bles/Laravel-AI.git
    cd Laravel-AI
    ```
 
