@@ -97,7 +97,12 @@ class OllamaLLMRepository implements LLMRepositoryInterface
             $temperature = $options['temperature'] ?? Config::get('ollama-laravel.temperature');
             $topP = $options['top_p'] ?? Config::get('ollama-laravel.top_p');
 
-            $ollama = $this->ollama->agent($this->getSystemPrompt())
+            array_unshift($messages, [
+                'role' => 'system',
+                'content' => $this->getSystemPrompt(),
+            ]);
+
+            $ollama = $this->ollama
                 ->model($model)
                 ->options([
                     'temperature' => (float)$temperature,
@@ -202,7 +207,8 @@ class OllamaLLMRepository implements LLMRepositoryInterface
 
     private function getSystemPrompt(): string
     {
-        return implode('\n\t', self::SYSTEM_PROMPT);
+        $separator = '*';
+        return trim($separator . ' ' . implode(PHP_EOL . $separator . ' ', self::SYSTEM_PROMPT)) . PHP_EOL;
     }
 
     private function checkSuccessResponse(Response|array $response): void
@@ -214,16 +220,27 @@ class OllamaLLMRepository implements LLMRepositoryInterface
 
     private function handleToolCalls(array $response, array &$messages): void
     {
-        $toolCall = $response['message']['tool_calls'][0]['function'];
-        $tool = $this->toolRegistry->get($toolCall['name']);
-        $result = $tool->execute($toolCall['arguments']);
+        $toolCalls = $response['message']['tool_calls'] ?? [];
 
-        $messages[] = $response['message'];
-        $messages[] = [
-            'role' => 'tool',
-            'name' => $toolCall['name'],
-            'content' => json_encode($result),
-        ];
+
+        foreach ($toolCalls as $toolCall) {
+            $function = $toolCall['function'];
+            $toolName = $function['name'];
+
+            $arguments = empty($function['arguments'])
+                ? new \stdClass()
+                : $function['arguments'];
+
+            $tool = $this->toolRegistry->get($toolName);
+            $result = $tool->execute($arguments);
+
+            $messages[] = [
+                'role' => 'tool',
+                'name' => $toolName,
+                'content' => json_encode($result),
+            ];
+        }
+
     }
 
 }

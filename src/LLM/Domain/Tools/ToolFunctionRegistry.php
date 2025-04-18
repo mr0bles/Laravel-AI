@@ -6,6 +6,7 @@ namespace Src\LLM\Domain\Tools;
 
 use InvalidArgumentException;
 use Src\LLM\Domain\Services\ToolServices\GetCurrentWeatherTool;
+use Src\LLM\Domain\Services\ToolServices\GetDateTool;
 
 class ToolFunctionRegistry
 {
@@ -22,6 +23,7 @@ class ToolFunctionRegistry
     {
         $this->tools = [
             new GetCurrentWeatherTool(),
+            new GetDateTool(),
         ];
     }
 

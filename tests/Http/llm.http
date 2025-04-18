@@ -108,7 +108,7 @@ Accept: application/json
     "messages": [
         {
             "role": "user",
-            "content": "Dame el clima de un pais aleatorio"
+            "content": "Dime la hora y el clima de Badajoz?"
         }
     ],
     "options": {

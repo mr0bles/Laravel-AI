@@ -9,6 +9,17 @@ use Src\LLM\Domain\Tools\ToolFunctionInterface;
 
 class GetCurrentWeatherTool implements ToolFunctionInterface
 {
+
+    public function name(): string
+    {
+        return 'get_weather_tool';
+    }
+
+    public function description(): string
+    {
+        return "Get the current weather for a location";
+    }
+
     public function definition(): array
     {
         return [
@@ -35,17 +46,7 @@ class GetCurrentWeatherTool implements ToolFunctionInterface
         ];
     }
 
-    public function name(): string
-    {
-        return 'getWeather';
-    }
-
-    public function description(): string
-    {
-        return "Get the current weather for a location";
-    }
-
-    public function execute(array $arguments): array
+    public function execute(mixed $arguments = null): array
     {
         $location = $arguments['location'];
         $format = $arguments['format'];
