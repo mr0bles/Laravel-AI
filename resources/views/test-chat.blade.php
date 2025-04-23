@@ -41,6 +41,22 @@
                 opacity: .2;
             }
         }
+
+        .tools-used {
+            font-size: 0.8em;
+            color: #6b7280;
+            margin-top: 0.5em;
+            padding-top: 0.5em;
+            border-top: 1px dashed #e5e7eb;
+        }
+
+        .tool-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen">
@@ -79,6 +95,22 @@
                                  message.role === 'system' ? 'bg-gray-100' : 'bg-green-100']">
                     <div class="text-sm text-gray-600 mb-1">@{{ message.role }}:</div>
                     <div class="whitespace-pre-wrap">@{{ message.content }}</div>
+                    <div v-if="message.tools" class="tools-used">
+                        <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Tools:
+                        <span
+                            v-for="(tool, i) in message.tools"
+                            :key="i"
+                            class="inline-block bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs mr-1"
+                            :title="tool.function.description"
+                            v-text="tool.function.name"
+                        ></span>
+                    </div>
                 </div>
             </transition-group>
             <div v-if="isLoading" class="p-3 bg-gray-100 rounded-lg inline-block typing-indicator">
@@ -89,13 +121,13 @@
         <!-- Input Area -->
         <div class="bg-white rounded-b-lg shadow-lg p-4 border-t">
             <div class="flex space-x-4">
-                    <textarea
-                        v-model="newMessage"
-                        @keydown.enter.prevent="sendMessage"
-                        class="flex-1 p-2 border rounded resize-none"
-                        placeholder="Type your message..."
-                        rows="2"
-                    ></textarea>
+                <textarea
+                    v-model="newMessage"
+                    @keydown.enter.prevent="sendMessage"
+                    class="flex-1 p-2 border rounded resize-none"
+                    placeholder="Type your message..."
+                    rows="2"
+                ></textarea>
                 <button
                     @click="sendMessage"
                     :disabled="isLoading"
@@ -122,7 +154,7 @@
                 ],
                 newMessage: '',
                 isLoading: false,
-                selectedModel: 'llama3:8b',
+                selectedModel: 'qwen2.5:3b',
                 temperature: 0.7,
                 topP: 0.9,
                 error: null
@@ -163,15 +195,29 @@
 
                     // Add assistant response
                     if (response.data && response.data.response) {
+                        // Extraer las herramientas usadas del contexto
+                        let toolsUsed = [];
+                        if (response.data.metadata?.messages) {
+                            for (const msg of response.data.metadata.messages) {
+                                if (msg.content && msg.content.includes('available_tools')) {
+                                    try {
+                                        const input = msg.content;
+                                        const jsonStart = input.indexOf('[');
+                                        const jsonStr = input.slice(jsonStart);
+                                        toolsUsed = JSON.parse(jsonStr);
+                                    } catch (e) {
+                                        console.error('Error parsing tools:', e);
+                                    }
+                                }
+                            }
+                        }
+
                         this.messages.push({
                             role: 'assistant',
-                            content: response.data.response.message?.content || response.data.response
+                            content: response.data.response.message?.content || response.data.response,
+                            tools: toolsUsed.length > 0 ? toolsUsed : null
                         });
 
-                        // También guardamos los metadatos si están disponibles
-                        if (response.data.metadata) {
-                            console.log('Metadata:', response.data.metadata);
-                        }
                     }
                 } catch (err) {
                     this.error = err.response?.data || err.message;
@@ -189,15 +235,6 @@
             }
         }
     }).mount('#app')
-</script>
-</body>
-</html>
-response: err.response?.data
-};
-}
-}
-}
-}).mount('#app')
 </script>
 </body>
 </html>
